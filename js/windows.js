@@ -1,205 +1,199 @@
-/* windows.js — 窗口管理系统（使用 xp.css 库类名） */
+/* Shared window state and viewport-constrained pointer interactions. */
 const WM = (function () {
   let zTop = 100;
   const wins = {};
+  const icons = {
+    about: 'assets/xp/about.webp', resume: 'assets/xp/resume.webp',
+    projects: 'assets/xp/projects.webp', contact: 'assets/xp/contact.webp',
+    notes: 'assets/xp/notes.webp', music: 'assets/xp/music.webp',
+  };
 
-  /* ── 创建窗口 ── */
   function create(opts) {
-    const {
-      id, title, icon = '',
-      width = 640, height = 480,
-      x, y,
-      content = '',
-      resizable = true,
-      menubar = '',
-      toolbar = '',
-      addressbar = '',
-      statusbar = '',
-      statusText = ''
-    } = opts;
-
-    if (wins[id]) { focus(id); return; }
-
-    const cx = x !== undefined ? x : Math.max(20, Math.random() * (window.innerWidth  - width  - 40));
-    const cy = y !== undefined ? y : Math.max(20, Math.random() * (window.innerHeight - height - 80));
-
-    const win = document.createElement('div');
+    if (wins[opts.id]) {
+      restore(opts.id);
+      return wins[opts.id].el;
+    }
+    const id = opts.id;
+    const desktop = document.getElementById('desktop');
+    const width = Math.min(opts.width || 640, desktop.clientWidth);
+    const height = Math.min(opts.height || 480, desktop.clientHeight);
+    const offset = Object.keys(wins).length * 24;
+    const win = document.createElement('section');
     win.className = 'window';
     win.id = 'win-' + id;
-    win.style.cssText = `left:${cx}px;top:${cy}px;width:${width}px;height:${height}px;z-index:${++zTop};`;
-
-    const menubarHtml    = menubar    ? `<div class="xp-menubar">${menubar}</div>` : '';
-    const toolbarHtml    = toolbar    ? `<div class="xp-toolbar">${toolbar}</div>` : '';
-    const addressbarHtml = addressbar ? `<div class="xp-addressbar">${addressbar}</div>` : '';
-    const statusbarHtml  = statusbar  ? `<div class="status-bar">${statusbar}</div>`
-                         : statusText ? `<div class="status-bar"><p class="status-bar-field">${statusText}</p></div>` : '';
-
+    win.setAttribute('role', 'dialog');
+    win.setAttribute('aria-labelledby', 'title-' + id);
+    win.tabIndex = -1;
+    win.style.cssText = `left:${Math.max(0, Math.min(opts.x ?? 154 + offset, desktop.clientWidth - width))}px;top:${Math.max(0, Math.min(opts.y ?? 28 + offset, desktop.clientHeight - height))}px;width:${width}px;height:${height}px;`;
+    const icon = icons[id] ? `<img src="${icons[id]}" alt="" />` : '';
     win.innerHTML = `
       <div class="title-bar" id="tb-${id}">
-        <div class="title-bar-text">${icon ? icon + ' ' : ''}${title}</div>
+        <div class="title-bar-text" id="title-${id}">${icon}${opts.title}</div>
         <div class="title-bar-controls">
-          <button aria-label="Minimize" onclick="WM.minimize('${id}')"></button>
-          <button aria-label="Maximize" onclick="WM.toggleMaximize('${id}')"></button>
-          <button aria-label="Close"    onclick="WM.close('${id}')"></button>
+          <button aria-label="Minimize" title="最小化" onclick="WM.minimize('${id}')"></button>
+          <button aria-label="Maximize" title="最大化" onclick="WM.toggleMaximize('${id}')"></button>
+          <button aria-label="Close" title="关闭" onclick="WM.close('${id}')"></button>
         </div>
       </div>
-      ${menubarHtml}${toolbarHtml}${addressbarHtml}
-      <div class="window-body" id="wb-${id}">${content}</div>
-      ${statusbarHtml}
-      ${resizable ? '<div class="win-resize" id="wr-' + id + '"></div>' : ''}
-    `;
-
-    document.getElementById('windows-container').appendChild(win);
-
-    // 标记所有其他窗口为非活动
-    Object.keys(wins).forEach(k => setInactive(k));
-
-    wins[id] = { el: win, minimized: false, maximized: false, savedRect: null };
-
-    // 拖拽
-    initDrag(id);
-    // 调整大小
-    if (resizable) initResize(id);
-    // 点击聚焦
-    win.addEventListener('mousedown', () => focus(id));
-
-    // 任务栏按钮
-    addTaskbarBtn(id, icon, title);
-
+      ${opts.menubar ? `<div class="xp-menubar">${opts.menubar}<img class="window-brand" src="assets/xp/login-logo.svg" alt="" /></div>` : ''}
+      ${opts.toolbar ? `<div class="xp-toolbar">${opts.toolbar}</div>` : ''}
+      ${opts.addressbar ? `<div class="xp-addressbar">${opts.addressbar}</div>` : ''}
+      <div class="window-body" id="wb-${id}">${opts.content || ''}</div>
+      ${opts.statusbar ? `<div class="status-bar">${opts.statusbar}</div>` : opts.statusText ? `<div class="status-bar"><p class="status-bar-field">${opts.statusText}</p></div>` : ''}
+      ${opts.resizable !== false ? `<div class="win-resize" id="wr-${id}"></div>` : ''}`;
+    desktop.querySelector('#windows-container').appendChild(win);
+    wins[id] = { el: win, minimized: false, maximized: false, savedRect: null, timer: null };
+    const btn = document.createElement('button');
+    btn.className = 'taskbar-btn';
+    btn.id = 'tbtn-' + id;
+    btn.title = opts.title;
+    btn.innerHTML = `${icon}<span>${opts.title}</span>`;
+    btn.onclick = () => {
+      if (wins[id].minimized) return restore(id);
+      if (win.classList.contains('active-window')) return minimize(id);
+      focus(id);
+    };
+    document.getElementById('taskbar-buttons').appendChild(btn);
+    win.addEventListener('pointerdown', () => focus(id, false));
+    win.addEventListener('focusin', () => focus(id, false));
+    initPointer(id, document.getElementById('tb-' + id), false);
+    document.getElementById('tb-' + id).addEventListener('dblclick', event => {
+      if (!event.target.closest('button')) toggleMaximize(id);
+    });
+    if (opts.resizable !== false) initPointer(id, document.getElementById('wr-' + id), true);
+    focus(id);
     return win;
   }
 
-  /* ── 聚焦 ── */
-  function focus(id) {
-    if (!wins[id]) return;
-    Object.keys(wins).forEach(k => setInactive(k));
-    wins[id].el.style.zIndex = ++zTop;
-    wins[id].el.classList.add('active-window');
-    document.getElementById('tb-' + id).classList.remove('inactive');
-    // 任务栏按钮高亮
-    document.querySelectorAll('.taskbar-btn').forEach(b => b.classList.remove('active-task'));
-    const btn = document.getElementById('tbtn-' + id);
-    if (btn) btn.classList.add('active-task');
+  function focus(id, moveFocus = true) {
+    const win = wins[id];
+    if (!win || win.minimized) return;
+    Object.entries(wins).forEach(([key, item]) => {
+      item.el.classList.toggle('active-window', key === id);
+      item.el.querySelector('.title-bar').classList.toggle('inactive', key !== id);
+      document.getElementById('tbtn-' + key).classList.toggle('active-task', key === id);
+    });
+    win.el.style.zIndex = ++zTop;
+    if (moveFocus) win.el.focus({ preventScroll: true });
   }
 
-  function setInactive(id) {
-    if (!wins[id]) return;
-    wins[id].el.classList.remove('active-window');
-    const tb = document.getElementById('tb-' + id);
-    if (tb) tb.classList.add('inactive');
+  function focusNext() {
+    const next = Object.entries(wins).filter(([, win]) => !win.minimized)
+      .sort((a, b) => Number(b[1].el.style.zIndex) - Number(a[1].el.style.zIndex))[0];
+    if (next) return focus(next[0]);
+    document.getElementById('start-btn').focus({ preventScroll: true });
   }
 
-  /* ── 关闭 ── */
   function close(id) {
-    if (!wins[id]) return;
-    wins[id].el.remove();
+    const win = wins[id];
+    if (!win) return;
+    const wasActive = win.el.classList.contains('active-window');
+    clearTimeout(win.timer);
+    win.el.remove();
+    document.getElementById('tbtn-' + id).remove();
     delete wins[id];
-    const btn = document.getElementById('tbtn-' + id);
-    if (btn) btn.remove();
-    // 通知 app（如音乐播放器）
-    if (typeof MusicPlayer !== 'undefined' && id === 'music') MusicPlayer.onWindowClose();
+    if (id === 'music') MusicPlayer.onWindowClose();
+    if (wasActive) focusNext();
   }
 
-  /* ── 最小化 ── */
   function minimize(id) {
-    if (!wins[id] || wins[id].minimized) return;
-    const el = wins[id].el;
-    el.classList.add('minimizing');
-    setTimeout(() => {
-      el.style.display = 'none';
-      el.classList.remove('minimizing');
-      wins[id].minimized = true;
-    }, 200);
-    const btn = document.getElementById('tbtn-' + id);
-    if (btn) btn.classList.remove('active-task');
+    const win = wins[id];
+    if (!win || win.minimized) return;
+    win.minimized = true;
+    win.el.classList.remove('active-window', 'restoring');
+    win.el.querySelector('.title-bar').classList.add('inactive');
+    win.el.classList.add('minimizing');
+    win.el.inert = true;
+    document.getElementById('tbtn-' + id).classList.remove('active-task');
+    clearTimeout(win.timer);
+    win.timer = setTimeout(() => {
+      win.el.hidden = true;
+      win.el.classList.remove('minimizing');
+    }, 160);
+    focusNext();
   }
 
-  /* ── 还原 ── */
   function restore(id) {
-    if (!wins[id]) return;
-    const el = wins[id].el;
-    el.style.display = '';
-    el.classList.add('restoring');
-    setTimeout(() => el.classList.remove('restoring'), 200);
-    wins[id].minimized = false;
-    focus(id);
-  }
-
-  /* ── 最大化/还原 ── */
-  function toggleMaximize(id) {
-    if (!wins[id]) return;
-    const w = wins[id];
-    const el = w.el;
-    if (!w.maximized) {
-      w.savedRect = { left: el.style.left, top: el.style.top, width: el.style.width, height: el.style.height };
-      el.style.left = '0'; el.style.top = '0';
-      el.style.width = '100%'; el.style.height = 'calc(100vh - 30px)';
-      w.maximized = true;
-    } else {
-      Object.assign(el.style, w.savedRect);
-      w.maximized = false;
+    const win = wins[id];
+    if (!win) return;
+    clearTimeout(win.timer);
+    win.el.hidden = false;
+    win.el.inert = false;
+    win.el.classList.remove('minimizing');
+    if (win.minimized) {
+      win.el.classList.add('restoring');
+      win.timer = setTimeout(() => win.el.classList.remove('restoring'), 160);
     }
+    win.minimized = false;
+    fit(win);
     focus(id);
   }
 
-  /* ── 任务栏按钮 ── */
-  function addTaskbarBtn(id, icon, title) {
-    const btn = document.createElement('button');
-    btn.className = 'taskbar-btn active-task';
-    btn.id = 'tbtn-' + id;
-    btn.innerHTML = `<span>${icon}</span><span>${title}</span>`;
-    btn.onclick = () => {
-      if (wins[id] && wins[id].minimized) restore(id);
-      else if (wins[id]) focus(id);
-    };
-    document.getElementById('taskbar-buttons').appendChild(btn);
+  function toggleMaximize(id) {
+    const win = wins[id];
+    if (!win) return;
+    if (win.maximized) {
+      Object.assign(win.el.style, win.savedRect);
+      win.maximized = false;
+      fit(win);
+    } else {
+      win.savedRect = { left: win.el.style.left, top: win.el.style.top, width: win.el.style.width, height: win.el.style.height };
+      win.maximized = true;
+      Object.assign(win.el.style, { left: '0px', top: '0px', width: '100%', height: '100%' });
+    }
+    win.el.classList.toggle('maximized', win.maximized);
+    const button = win.el.querySelector('.title-bar-controls button:nth-child(2)');
+    button.setAttribute('aria-label', win.maximized ? 'Restore' : 'Maximize');
+    button.title = win.maximized ? '还原' : '最大化';
+    focus(id);
   }
 
-  /* ── 拖拽 ── */
-  function initDrag(id) {
-    const tb = document.getElementById('tb-' + id);
-    const el = wins[id].el;
-    let ox, oy;
-    tb.addEventListener('mousedown', e => {
-      if (e.target.tagName === 'BUTTON') return;
-      focus(id);
-      ox = e.clientX - el.offsetLeft;
-      oy = e.clientY - el.offsetTop;
-      const onMove = e => {
-        if (wins[id] && wins[id].maximized) return;
-        el.style.left = (e.clientX - ox) + 'px';
-        el.style.top  = Math.max(0, e.clientY - oy) + 'px';
-      };
-      const onUp = () => {
-        document.removeEventListener('mousemove', onMove);
-        document.removeEventListener('mouseup', onUp);
-      };
-      document.addEventListener('mousemove', onMove);
-      document.addEventListener('mouseup', onUp);
+  function fit(win) {
+    if (win.maximized || win.minimized) return;
+    const desktop = document.getElementById('desktop');
+    const width = Math.min(win.el.offsetWidth, desktop.clientWidth);
+    const height = Math.min(win.el.offsetHeight, desktop.clientHeight);
+    Object.assign(win.el.style, {
+      width: width + 'px', height: height + 'px',
+      left: Math.max(0, Math.min(win.el.offsetLeft, desktop.clientWidth - width)) + 'px',
+      top: Math.max(0, Math.min(win.el.offsetTop, desktop.clientHeight - height)) + 'px',
     });
   }
 
-  /* ── 调整大小 ── */
-  function initResize(id) {
-    const handle = document.getElementById('wr-' + id);
-    if (!handle) return;
-    const el = wins[id].el;
-    handle.addEventListener('mousedown', e => {
-      e.stopPropagation();
-      const sx = e.clientX, sy = e.clientY;
-      const sw = el.offsetWidth, sh = el.offsetHeight;
-      const onMove = e => {
-        el.style.width  = Math.max(280, sw + e.clientX - sx) + 'px';
-        el.style.height = Math.max(180, sh + e.clientY - sy) + 'px';
+  function initPointer(id, handle, resizing) {
+    handle.addEventListener('pointerdown', event => {
+      if (event.button !== 0 || event.target.closest('button') || wins[id].maximized) return;
+      event.preventDefault();
+      const el = wins[id].el;
+      const desktop = document.getElementById('desktop');
+      const origin = { x: event.clientX, y: event.clientY, left: el.offsetLeft, top: el.offsetTop, width: el.offsetWidth, height: el.offsetHeight };
+      handle.setPointerCapture(event.pointerId);
+      const move = event => {
+        if (resizing) {
+          el.style.width = Math.min(desktop.clientWidth - origin.left, Math.max(Math.min(280, desktop.clientWidth), origin.width + event.clientX - origin.x)) + 'px';
+          el.style.height = Math.min(desktop.clientHeight - origin.top, Math.max(Math.min(180, desktop.clientHeight), origin.height + event.clientY - origin.y)) + 'px';
+          return;
+        }
+        el.style.left = Math.max(0, Math.min(desktop.clientWidth - el.offsetWidth, origin.left + event.clientX - origin.x)) + 'px';
+        el.style.top = Math.max(0, Math.min(desktop.clientHeight - el.offsetHeight, origin.top + event.clientY - origin.y)) + 'px';
       };
-      const onUp = () => {
-        document.removeEventListener('mousemove', onMove);
-        document.removeEventListener('mouseup', onUp);
+      const stop = () => {
+        handle.removeEventListener('pointermove', move);
+        handle.removeEventListener('lostpointercapture', stop);
       };
-      document.addEventListener('mousemove', onMove);
-      document.addEventListener('mouseup', onUp);
+      handle.addEventListener('pointermove', move);
+      handle.addEventListener('lostpointercapture', stop);
     });
   }
 
-  return { create, close, focus, minimize, restore, toggleMaximize };
+  function showDesktop() {
+    Object.keys(wins).forEach(minimize);
+  }
+
+  function closeAll() {
+    Object.keys(wins).forEach(close);
+  }
+
+  window.addEventListener('resize', () => Object.values(wins).forEach(fit));
+  return { create, close, focus, minimize, restore, toggleMaximize, showDesktop, closeAll };
 })();

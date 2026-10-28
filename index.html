@@ -3,196 +3,130 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Novus77 — Windows XP</title>
+  <meta name="description" content="Novus77 的个人桌面：在 Windows XP 风格的网页里，探索我的项目、随笔和音乐。" />
+  <meta name="theme-color" content="#245edb" />
+  <title>Novus77 XP — 个人桌面</title>
   <link rel="icon" type="image/png" href="assets/images/favicon.png" />
-  <!-- XP.css 官方库 -->
-  <link rel="stylesheet" href="https://unpkg.com/xp.css@0.2.3/dist/XP.css" />
-  <link rel="stylesheet" href="css/xp-lib.css" />
-  <!-- 自定义样式（覆盖库，添加桌面/任务栏/启动屏） -->
-  <link rel="stylesheet" href="css/xp.css" />
-  <link rel="stylesheet" href="css/windows.css" />
-  <link rel="stylesheet" href="css/apps.css" />
+  <link rel="preload" as="image" href="assets/xp/login-logo.svg" />
+  <link rel="stylesheet" href="css/xp-lib.css?v=20261028-music2" />
+  <link rel="stylesheet" href="css/xp.css?v=20261028-music2" />
+  <link rel="stylesheet" href="css/windows.css?v=20261028-music2" />
+  <link rel="stylesheet" href="css/apps.css?v=20261028-music2" />
 </head>
-<body>
-
-  <!-- ========== 启动屏幕 ========== -->
-  <div id="boot-screen">
+<body class="crt-enabled">
+  <div id="boot-screen" aria-label="正在启动 Novus77 XP">
     <div class="boot-logo">
-      <div class="boot-windows-logo">
-        <div class="logo-quad red"></div>
-        <div class="logo-quad green"></div>
-        <div class="logo-quad blue"></div>
-        <div class="logo-quad yellow"></div>
-      </div>
-      <div class="boot-text">
-        <span class="boot-title-thin">Microsoft</span>
-        <span class="boot-title-bold">Windows<span class="boot-xp">XP</span></span>
-        <span class="boot-edition">Professional</span>
-      </div>
+      <img src="assets/xp/login-logo.svg" alt="Windows XP" />
+      <div class="boot-wordmark">Novus77</div>
+      <div class="boot-edition">Personal Edition</div>
     </div>
-    <div class="boot-progress-container">
-      <div class="boot-progress-bar">
-        <div class="boot-progress-fill"></div>
-      </div>
-    </div>
-    <div class="boot-copyright">Copyright © Microsoft Corporation</div>
+    <div class="boot-progress-bar" role="progressbar" aria-label="正在启动"><div class="boot-progress-fill"></div></div>
+    <button class="boot-skip" id="boot-skip">跳过启动动画 →</button>
+    <div class="boot-copyright">A little nostalgia. A personal desktop.</div>
   </div>
 
-  <!-- ========== 登录屏幕 ========== -->
   <div id="login-screen" style="display:none;">
     <div class="login-top-bar"></div>
-    <div class="login-main">
+    <main class="login-main">
       <div class="login-content">
         <div class="login-left">
           <div class="login-logo-container">
-            <div class="xp-flag">
-              <div class="flag-segment red"></div>
-              <div class="flag-segment green"></div>
-              <div class="flag-segment blue"></div>
-              <div class="flag-segment yellow"></div>
-            </div>
-            <div class="login-branding">
-              <h1 class="brand-name">Novus77<span class="brand-xp">XP</span></h1>
-            </div>
+            <img class="xp-logo-image" src="assets/xp/login-logo.svg" alt="Windows XP" />
+            <h1 class="brand-name">Novus77</h1>
+            <p class="brand-subtitle">Developer / Creator</p>
           </div>
+          <p class="login-instruction">请点击 Novus77 头像，登录我的个人桌面</p>
         </div>
         <div class="login-right">
-          <div class="user-card" id="login-btn">
-            <div class="user-avatar">
-              <img src="assets/images/avatar.jpg" alt="Novus77" />
-            </div>
-            <div class="user-info">
-              <div class="user-name">Novus77</div>
-            </div>
-          </div>
+          <button class="user-card" id="login-btn" aria-label="以 Novus77 身份登录">
+            <img class="user-avatar" src="assets/images/avatar.jpg" alt="Novus77 的头像" />
+            <span class="user-info"><span class="user-name">Novus77</span><span class="user-role">Developer / Creator</span></span>
+            <span class="login-arrow" aria-hidden="true">➜</span>
+          </button>
         </div>
       </div>
-    </div>
-    <div class="login-bottom-bar">
-      <div class="login-restart" onclick="handleShutdown()">
-        <svg class="restart-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
-        </svg>
-        <span>重启 Novus77 XP</span>
-      </div>
-      <div class="login-footer-text">
-        <p>登录后，系统将为您呈现完整的作品集。</p>
-        <p>每个细节都经过精心设计。</p>
-      </div>
-    </div>
+    </main>
+    <footer class="login-bottom-bar">
+      <button class="login-restart" onclick="restartDesktop()"><img src="assets/xp/restart.webp" alt="" />重启 Novus77 XP</button>
+      <div class="login-footer-text"><p>登录之后，这里就交给你探索。</p><p>项目、随笔，还有一些喜欢的音乐。</p></div>
+    </footer>
   </div>
 
-  <!-- ========== 桌面 ========== -->
-  <div id="desktop" style="display:none;">
-
-    <!-- 桌面图标 -->
-    <div class="desktop-icons">
-      <div class="desktop-icon" ondblclick="openWindow('about')">
-        <img src="assets/icons/mycomputer.png" alt="关于我" />
-        <span>关于我</span>
-      </div>
-      <div class="desktop-icon" ondblclick="openWindow('notes')">
-        <img src="assets/icons/document.png" alt="我的文档" />
-        <span>我的文档</span>
-      </div>
-      <div class="desktop-icon" ondblclick="openWindow('projects')">
-        <img src="assets/icons/folder.png" alt="我的项目" />
-        <span>我的项目</span>
-      </div>
-      <div class="desktop-icon" ondblclick="openWindow('contact')">
-        <img src="assets/icons/mail.png" alt="联系方式" />
-        <span>联系方式</span>
-      </div>
-      <div class="desktop-icon" ondblclick="openWindow('music')">
-        <img src="assets/icons/music.png" alt="音乐播放器" />
-        <span>音乐播放器</span>
-      </div>
-    </div>
-
-    <!-- 窗口容器 -->
+  <div id="desktop" tabindex="-1" style="display:none;">
+    <nav class="desktop-icons" aria-label="桌面应用">
+      <button class="desktop-icon" data-app="about"><img src="assets/xp/about.webp" alt="" draggable="false" /><span>About Me</span></button>
+      <button class="desktop-icon" data-app="resume"><img src="assets/xp/resume.webp" alt="" draggable="false" /><span>My Resume</span></button>
+      <button class="desktop-icon" data-app="projects"><img src="assets/xp/projects.webp" alt="" draggable="false" /><span>My Projects</span></button>
+      <button class="desktop-icon" data-app="contact"><img src="assets/xp/contact.webp" alt="" draggable="false" /><span>Contact Me</span></button>
+      <button class="desktop-icon" data-app="music"><img src="assets/xp/music.webp" alt="" draggable="false" /><span>音乐播放器</span></button>
+    </nav>
     <div id="windows-container"></div>
 
-    <!-- 任务栏 -->
-    <div id="taskbar">
-      <button class="start-btn" id="start-btn" onclick="toggleStartMenu()">
-        <div class="start-logo">
-          <div class="s-quad red"></div><div class="s-quad green"></div>
-          <div class="s-quad blue"></div><div class="s-quad yellow"></div>
-        </div>
-        <span>开始</span>
-      </button>
-      <div class="taskbar-sep"></div>
-      <div id="taskbar-buttons"></div>
+    <div id="taskbar" aria-label="任务栏">
+      <button class="start-btn" id="start-btn" onclick="toggleStartMenu()" aria-label="开始菜单" aria-expanded="false" aria-controls="start-menu"><img src="assets/xp/start.webp" alt="start" /></button>
+      <div id="taskbar-buttons" aria-label="已打开的应用"></div>
       <div class="taskbar-tray">
-        <span class="tray-icon" title="网络">🌐</span>
-        <span class="tray-icon" title="音量">🔊</span>
-        <div class="tray-clock" id="tray-clock"></div>
+        <button class="tray-chevron" id="tray-toggle" aria-label="隐藏托盘图标" aria-expanded="true" aria-controls="tray-icons" title="隐藏托盘图标">‹</button>
+        <div class="tray-icons" id="tray-icons">
+        <button class="tray-button" id="welcome-btn" aria-label="桌面使用提示" aria-expanded="false" aria-controls="welcome-balloon" title="桌面使用提示"><img src="assets/xp/welcome.webp" alt="" /></button>
+        <button class="tray-button" id="volume-btn" aria-label="静音" aria-pressed="false" title="静音"><img src="assets/xp/volume.webp" alt="" /></button>
+        <button class="tray-button" onclick="openWindow('about');openWindow('projects')" aria-label="快速打开关于我和我的项目" title="快速开始"><img src="assets/xp/quickstart.webp" alt="" /></button>
+        </div>
+        <time class="tray-clock" id="tray-clock"></time>
       </div>
     </div>
 
-    <!-- 开始菜单 -->
-    <div id="start-menu" style="display:none;">
-      <div class="sm-header">
-        <div class="sm-avatar">N</div>
-        <span class="sm-username">Novus77</span>
-      </div>
+    <section id="start-menu" aria-label="开始菜单" style="display:none;">
+      <header class="sm-header"><img class="sm-avatar" src="assets/images/avatar.jpg" alt="" /><span class="sm-username">Novus77</span></header>
       <div class="sm-body">
         <div class="sm-left">
-          <div class="sm-item sm-pinned" onclick="openWindow('about');toggleStartMenu()">
-            <span class="sm-icon">🖥️</span>
-            <span class="sm-label">关于我</span>
-          </div>
-          <div class="sm-item sm-pinned" onclick="openWindow('notes');toggleStartMenu()">
-            <span class="sm-icon">📄</span>
-            <span class="sm-label">我的文档</span>
-          </div>
-          <div class="sm-item sm-pinned" onclick="openWindow('projects');toggleStartMenu()">
-            <span class="sm-icon">📁</span>
-            <span class="sm-label">我的项目</span>
-          </div>
-          <div class="sm-item sm-pinned" onclick="openWindow('music');toggleStartMenu()">
-            <span class="sm-icon">🎵</span>
-            <span class="sm-label">音乐播放器</span>
-          </div>
+          <button class="sm-item sm-pinned" data-app="projects"><img src="assets/xp/projects.webp" alt="" /><span><strong>我的项目</strong><small>作品与实验</small></span></button>
+          <button class="sm-item sm-pinned" data-app="contact"><img src="assets/xp/contact.webp" alt="" /><span><strong>联系方式</strong><small>给我写封邮件</small></span></button>
           <div class="sm-divider"></div>
-          <div class="sm-item" onclick="openWindow('contact');toggleStartMenu()">
-            <span class="sm-icon">✉️</span>
-            <span class="sm-label">联系方式</span>
-          </div>
+          <button class="sm-item" data-app="about"><img src="assets/xp/about.webp" alt="" /><span>关于我</span></button>
+          <button class="sm-item" data-app="resume"><img src="assets/xp/resume.webp" alt="" /><span>我的简历</span></button>
+          <button class="sm-item" data-app="notes"><img src="assets/xp/notes.webp" alt="" /><span>我的文档</span></button>
+          <button class="sm-item" data-app="music"><img src="assets/xp/music.webp" alt="" /><span>Windows Media Player</span></button>
         </div>
         <div class="sm-right">
-          <div class="sm-right-item" onclick="openWindow('notes');toggleStartMenu()"><span>📁</span> 我的文档</div>
-          <div class="sm-right-item"><span>🖼️</span> 我的图片</div>
-          <div class="sm-right-item"><span>🎵</span> 我的音乐</div>
+          <button class="sm-right-item" data-app="notes"><img src="assets/icons/folder.png" alt="" />我的文档</button>
+          <button class="sm-right-item" data-app="music"><img src="assets/xp/music.webp" alt="" />我的音乐</button>
+          <button class="sm-right-item" data-app="projects"><img src="assets/xp/projects.webp" alt="" />我的项目</button>
           <div class="sm-right-divider"></div>
-          <div class="sm-right-item" onclick="handleShutdown()"><span>⚙️</span> 控制面板</div>
+          <button class="sm-right-item" data-app="about"><img src="assets/icons/mycomputer.png" alt="" />我的电脑</button>
+          <button class="sm-right-item" id="menu-crt" aria-pressed="true"><img src="assets/xp/welcome.webp" alt="" />CRT 屏幕效果</button>
         </div>
       </div>
-      <div class="sm-footer">
-        <div class="sm-footer-btn" onclick="handleShutdown()">
-          <span>⏻</span> 关闭计算机
-        </div>
-      </div>
-    </div>
+      <footer class="sm-footer">
+        <button class="sm-footer-btn" onclick="logOffDesktop()"><img src="assets/xp/logoff.webp" alt="" />注销</button>
+        <button class="sm-footer-btn" onclick="handleShutdown()"><img src="assets/xp/shutdown.webp" alt="" />关闭计算机</button>
+      </footer>
+    </section>
 
+    <aside class="welcome-balloon" id="welcome-balloon" hidden>
+      <button class="balloon-close" aria-label="关闭欢迎提示">×</button>
+      <strong><img src="assets/xp/welcome.webp" alt="" />欢迎来到 Novus77 XP</strong>
+      <p>我的个人网站，也是一台可以探索的电脑。</p>
+      <p class="desktop-hint">双击桌面图标，或从「开始」菜单打开应用。</p>
+      <small>小提示：可以拖动窗口，也可以试试右下角的 CRT 开关。</small>
+    </aside>
+    <div class="desktop-context" id="desktop-context" hidden>
+      <button onclick="WM.showDesktop();closeDesktopContext()">显示桌面</button>
+      <button onclick="toggleCRT();closeDesktopContext()">切换 CRT 屏幕效果</button>
+      <hr />
+      <button onclick="openWindow('about');closeDesktopContext()">关于 Novus77 XP</button>
+    </div>
   </div>
 
-  <!-- ========== 关机屏幕 ========== -->
   <div id="shutdown-screen" style="display:none;">
-    <div class="shutdown-content">
-      <div class="boot-windows-logo" style="width:48px;height:48px;opacity:0.5;">
-        <div class="logo-quad red"></div><div class="logo-quad green"></div>
-        <div class="logo-quad blue"></div><div class="logo-quad yellow"></div>
-      </div>
-      <div class="shutdown-text">正在关机，请稍候...</div>
-    </div>
+    <div class="shutdown-content"><img src="assets/xp/login-logo.svg" alt="Windows XP" /><p class="shutdown-text">现在可以安心休息了。</p><button onclick="restartDesktop()">重新启动 Novus77 XP</button></div>
   </div>
-
-  <script src="js/clock.js"></script>
-  <script src="js/boot.js"></script>
-  <script src="js/windows.js"></script>
-  <script src="js/apps.js"></script>
-  <script src="js/music.js"></script>
-  <script src="js/main.js"></script>
+  <noscript><div class="noscript-message">这个 XP 桌面需要 JavaScript。你也可以直接联系我：<a href="mailto:1432680433@qq.com">1432680433@qq.com</a>。</div></noscript>
+  <script src="js/clock.js?v=20261028-music2"></script>
+  <script src="js/boot.js?v=20261028-music2"></script>
+  <script src="js/windows.js?v=20261028-music2"></script>
+  <script src="js/apps.js?v=20261028-music2"></script>
+  <script src="js/music.js?v=20261028-music2"></script>
+  <script src="js/main.js?v=20261028-music2"></script>
 </body>
 </html>

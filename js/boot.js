@@ -1,78 +1,67 @@
-/* boot.js — 启动流程控制 */
+/* Boot, login and power actions share one screen transition. */
 (function () {
-  const BOOT_DURATION  = 3000;  // 启动动画时长 ms
-  const LOGIN_DURATION = 500;   // 淡入登录屏幕
   const startupSound = new Audio('assets/sounds/windows-xp-startup.mp3');
-  let hasPlayedStartupSound = false;
-
-  // 预加载壁纸
   const wallpaper = new Image();
-  wallpaper.src = 'assets/images/windows XP.jpg';
+  wallpaper.src = 'assets/images/novus77-hillside.png';
   startupSound.preload = 'auto';
+  let timer;
+  let entering = false;
 
-  function playStartupSound() {
-    if (hasPlayedStartupSound) return;
-    hasPlayedStartupSound = true;
-    startupSound.currentTime = 0;
-    startupSound.play().catch(() => {
-      // Some browsers may still block playback even after a click.
+  function showScreen(id) {
+    ['boot-screen', 'login-screen', 'desktop', 'shutdown-screen'].forEach(key => {
+      const screen = document.getElementById(key);
+      screen.style.display = key === id ? (key === 'desktop' ? 'block' : key === 'shutdown-screen' ? 'grid' : 'flex') : 'none';
+      screen.classList.remove('fade-in', 'fade-out');
+      screen.inert = key !== id;
     });
+    document.getElementById(id).classList.add('fade-in');
   }
 
   function showLogin() {
-    const boot  = document.getElementById('boot-screen');
-    const login = document.getElementById('login-screen');
-
-    boot.classList.add('fade-out');
-    setTimeout(() => {
-      boot.style.display = 'none';
-      login.style.display = 'flex';
-      login.classList.add('fade-in');
-    }, LOGIN_DURATION);
+    clearTimeout(timer);
+    entering = false;
+    showScreen('login-screen');
+    document.getElementById('login-btn').focus({ preventScroll: true });
   }
 
   function showDesktop() {
-    const login   = document.getElementById('login-screen');
-    const desktop = document.getElementById('desktop');
-
-    playStartupSound();
-
-    function doShow() {
-      login.classList.add('fade-out');
-      setTimeout(() => {
-        login.style.display = 'none';
-        desktop.style.display = 'block';
-        desktop.classList.add('fade-in');
-      }, 400);
-    }
-
-    // 若壁纸已加载完成直接显示，否则等加载完再显示
-    if (wallpaper.complete) {
-      doShow();
-    } else {
-      wallpaper.onload = doShow;
-      wallpaper.onerror = doShow; // 加载失败也继续
-    }
+    if (entering) return;
+    entering = true;
+    startupSound.muted = document.getElementById('volume-btn').getAttribute('aria-pressed') === 'true';
+    startupSound.currentTime = 0;
+    startupSound.play().catch(() => {});
+    showScreen('desktop');
+    document.getElementById('desktop').focus({ preventScroll: true });
+    document.getElementById('welcome-balloon').hidden = true;
+    document.getElementById('welcome-btn').setAttribute('aria-expanded', 'false');
   }
 
-  // 启动完成后跳转登录页
-  setTimeout(showLogin, BOOT_DURATION);
+  function leaveDesktop() {
+    clearTimeout(timer);
+    startupSound.pause();
+    WM.closeAll();
+    document.getElementById('welcome-balloon').hidden = true;
+    document.getElementById('welcome-btn').setAttribute('aria-expanded', 'false');
+    closeStartMenu();
+    closeDesktopContext();
+  }
 
-  // 点击用户头像登录
-  document.getElementById('login-btn').addEventListener('click', showDesktop);
-
-  // 关机
-  window.handleShutdown = function () {
-    const desktop  = document.getElementById('desktop');
-    const shutdown = document.getElementById('shutdown-screen');
-    const startMenu = document.getElementById('start-menu');
-    startMenu.style.display = 'none';
-
-    desktop.classList.add('fade-out');
-    setTimeout(() => {
-      desktop.style.display = 'none';
-      shutdown.style.display = 'flex';
-      shutdown.classList.add('fade-in');
-    }, 400);
+  window.restartDesktop = function () {
+    leaveDesktop();
+    entering = false;
+    showScreen('boot-screen');
+    timer = setTimeout(showLogin, 1800);
   };
+  window.logOffDesktop = function () {
+    leaveDesktop();
+    showLogin();
+  };
+  window.handleShutdown = function () {
+    leaveDesktop();
+    showScreen('shutdown-screen');
+    document.querySelector('#shutdown-screen button').focus();
+  };
+  document.getElementById('login-btn').addEventListener('click', showDesktop);
+  document.getElementById('boot-skip').addEventListener('click', showLogin);
+  timer = setTimeout(showLogin, matchMedia('(prefers-reduced-motion: reduce)').matches ? 100 : 2400);
 })();

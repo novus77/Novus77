@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="240" height="195" viewBox="0 0 240 195">
+  <defs>
+    <linearGradient id="r"><stop stop-color="#b63f0b"/><stop offset=".4" stop-color="#ff9a27"/><stop offset="1" stop-color="#db4205"/></linearGradient>
+    <linearGradient id="g"><stop stop-color="#537a0a"/><stop offset=".65" stop-color="#b6ee16"/><stop offset="1" stop-color="#77ae02"/></linearGradient>
+    <linearGradient id="b"><stop stop-color="#253c9b"/><stop offset=".45" stop-color="#8ca5ff"/><stop offset="1" stop-color="#2e53d3"/></linearGradient>
+    <linearGradient id="y"><stop stop-color="#b77904"/><stop offset=".6" stop-color="#ffe238"/><stop offset="1" stop-color="#e3aa00"/></linearGradient>
+    <filter id="shadow"><feDropShadow dx="1" dy="2" stdDeviation="1" flood-opacity=".3"/></filter>
+  </defs>
+  <g transform="translate(78 10) rotate(8 60 60)" filter="url(#shadow)" stroke-width=".6">
+    <path d="M15 6 Q42 -7 66 3 L56 52 Q30 43 5 55 Z" fill="url(#r)" stroke="#f59c56"/>
+    <path d="M72 5 Q98 17 123 5 L113 55 Q88 68 62 54 Z" fill="url(#g)" stroke="#a8c34e"/>
+    <path d="M4 62 Q29 49 55 59 L45 108 Q19 98 -6 111 Z" fill="url(#b)" stroke="#8a9fe7"/>
+    <path d="M61 61 Q87 75 112 62 L102 111 Q76 124 51 111 Z" fill="url(#y)" stroke="#e6ca66"/>
+  </g>
+  <text x="204" y="156" fill="#eb6d26" font-family="Arial,sans-serif" font-size="27">xp</text>
+</svg>

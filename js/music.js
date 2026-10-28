@@ -103,6 +103,7 @@ const MusicPlayer = (function () {
 
   /* ---- 打开窗口 ---- */
   function open() {
+    if (document.getElementById('win-music')) return WM.restore('music');
     WM.create({
       id:      'music',
       title:   'Windows Media Player',
@@ -123,9 +124,10 @@ const MusicPlayer = (function () {
 
   /* ---- 音频初始化 ---- */
   function initAudio() {
-    audio.addEventListener('timeupdate', updateProgress);
-    audio.addEventListener('ended',      () => next());
+    audio.ontimeupdate = updateProgress;
+    audio.onended = next;
     audio.volume = 0.7;
+    audio.muted = document.getElementById('volume-btn').getAttribute('aria-pressed') === 'true';
     setTrack(currentIndex, false);
     initProgressDrag();
     initVolumeDrag();
@@ -222,6 +224,7 @@ const MusicPlayer = (function () {
     } else {
       audio.play().then(() => {
         isPlaying = true;
+        updatePlayBtn();
         startViz();
       }).catch(() => {});
     }
@@ -342,5 +345,6 @@ const MusicPlayer = (function () {
     toggleShuffle,
     toggleLoop,
     onWindowClose,
+    setMuted: (muted) => { audio.muted = muted; },
   };
 })();

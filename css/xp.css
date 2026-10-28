@@ -1,452 +1,158 @@
-/* xp.css — 自定义样式（覆盖 xp-lib.css，添加桌面/任务栏/启动屏） */
-
-/* ── 基础重置 ── */
-html, body {
-  width: 100%; height: 100%;
-  overflow: hidden;
-  margin: 0; padding: 0;
-  font-family: 'Tahoma', Arial, sans-serif;
-  font-size: 11px;
-  user-select: none;
+/* Desktop chrome. Window controls are provided by the bundled XP.css. */
+:root { --taskbar-height: 30px; --xp-font: Tahoma, 'Microsoft YaHei', Arial, sans-serif; }
+* { box-sizing: border-box; }
+html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; font: 11px var(--xp-font); user-select: none; }
+button, input { font-family: var(--xp-font); }
+button { cursor: pointer; }
+button:focus-visible, a:focus-visible, [tabindex="0"]:focus-visible { outline: 1px dotted currentColor; outline-offset: -3px; }
+[hidden] { display: none !important; }
+/* A single fixed texture avoids repainting noise inside every window. */
+body.crt-enabled::after {
+  content: ''; position: fixed; inset: 0; z-index: 10000; pointer-events: none; opacity: .19;
+  background: repeating-linear-gradient(0deg, #17234b26 0 1px, transparent 1px 3px), repeating-linear-gradient(90deg, #fff2 0 1px, #1231 1px 3px);
 }
-
-/* ── 过渡动画 ── */
-.fade-out { animation: fadeOut 0.4s ease forwards; }
-.fade-in  { animation: fadeIn  0.4s ease forwards; }
+.fade-out { animation: fadeOut .3s ease forwards; pointer-events: none; }
+.fade-in { animation: fadeIn .3s ease both; }
 @keyframes fadeOut { to { opacity: 0; } }
-@keyframes fadeIn  { from { opacity: 0; } to { opacity: 1; } }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-/* ══════════════════════════════════════════
-   启动屏幕
-══════════════════════════════════════════ */
-#boot-screen {
-  position: fixed; inset: 0;
-  background: #000;
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  z-index: 9999;
-}
-.boot-logo { display: flex; align-items: center; gap: 18px; margin-bottom: 52px; }
-.boot-windows-logo {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 3px;
-  width: 56px; height: 56px;
-}
-.logo-quad { border-radius: 2px; }
-.logo-quad.red    { background: #f25022; }
-.logo-quad.green  { background: #7fba00; }
-.logo-quad.blue   { background: #00a4ef; }
-.logo-quad.yellow { background: #ffb900; }
-.boot-text { display: flex; flex-direction: column; line-height: 1.1; }
-.boot-title-thin {
-  color: #fff; font-size: 15px; font-weight: 300;
-  letter-spacing: 4px; font-family: 'Franklin Gothic Medium', Arial, sans-serif;
-}
-.boot-title-bold {
-  color: #fff; font-size: 38px; font-weight: 700;
-  font-family: 'Franklin Gothic Medium', Arial, sans-serif;
-}
-.boot-xp { color: #ff7b00; font-style: italic; margin-left: 4px; }
-.boot-edition { color: #888; font-size: 11px; letter-spacing: 2px; margin-top: 3px; }
-.boot-progress-container { width: 200px; }
-.boot-progress-bar {
-  height: 12px; border: 1px solid #333; border-radius: 2px;
-  overflow: hidden; background: #111;
-}
-.boot-progress-fill {
-  height: 100%; width: 0%;
-  background: linear-gradient(180deg, #3c8cf8 0%, #1b5bca 50%, #2e7cf6 100%);
-  animation: bootProgress 3s linear forwards;
-}
-@keyframes bootProgress {
-  0%{width:0%} 30%{width:35%} 60%{width:65%} 80%{width:82%} 100%{width:100%}
-}
-.boot-copyright {
-  position: fixed; bottom: 24px;
-  color: #444; font-size: 10px; letter-spacing: 1px;
-}
+#boot-screen { position: fixed; inset: 0; background: #080808; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9000; color: white; }
+.boot-logo { position: relative; width: 280px; height: 238px; margin-bottom: 35px; }
+.boot-logo img { width: 280px; }
+.boot-wordmark { position: absolute; bottom: 41px; left: 30px; font: 52px Arial, sans-serif; letter-spacing: -3px; }
+.boot-edition { position: absolute; bottom: 23px; left: 33px; font: 15px Arial, sans-serif; }
+.boot-progress-bar { width: 150px; height: 13px; border: 1px solid #8b8b8b; border-radius: 3px; padding: 2px; overflow: hidden; }
+.boot-progress-fill { width: 32px; height: 7px; background: repeating-linear-gradient(90deg, #3267cb 0 8px, transparent 8px 10px); animation: bootProgress 1.6s linear infinite; }
+@keyframes bootProgress { from { transform: translateX(-35px); } to { transform: translateX(150px); } }
+.boot-skip { margin-top: 25px; background: none; box-shadow: none; border: 0; color: #aaa; font-size: 11px; }
+.boot-skip:hover { color: white; }
+.boot-copyright { position: absolute; bottom: 25px; color: #aaa; }
 
-/* ══════════════════════════════════════════
-   登录屏幕
-══════════════════════════════════════════ */
-#login-screen {
-  position: fixed; inset: 0;
-  display: flex; flex-direction: column;
-  background: linear-gradient(180deg, #5b8dd6 0%, #4a7bc4 100%);
-  z-index: 9998;
-}
+#login-screen { position: fixed; inset: 0; display: flex; flex-direction: column; background: #5a7edc; z-index: 8000; color: white; }
+.login-top-bar { height: 13.4dvh; flex-shrink: 0; background: #00309c; border-bottom: 2px solid #a4b6eb; }
+.login-main { flex: 1; min-height: 0; display: grid; place-items: center; background: radial-gradient(ellipse at 12% 5%, #a4baf4 0%, #6989e4 30%, #5a7edc 65%); }
+.login-content { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); width: min(920px, 100%); min-height: 380px; align-items: center; }
+.login-left { position: relative; text-align: right; padding: 30px 54px 30px 20px; }
+.login-left::after { content: ''; position: absolute; top: -40px; bottom: -40px; right: 0; width: 1px; background: linear-gradient(transparent, #d9e3ffb3 25%, #d9e3ffb3 75%, transparent); }
+.login-logo-container { position: relative; width: 220px; height: 179px; margin-left: auto; margin-bottom: 18px; text-align: left; }
+.xp-logo-image { width: 220px; height: auto; display: block; }
+.brand-name { position: absolute; bottom: 24px; left: 2px; margin: 0; font: 46px/1 Arial, sans-serif; letter-spacing: -2.5px; color: white; }
+.brand-subtitle { position: absolute; bottom: 5px; left: 5px; margin: 0; font: italic 14px Arial, sans-serif; color: white; }
+.login-instruction { margin: 0; font: 17px/1.6 Arial, 'Microsoft YaHei', sans-serif; white-space: nowrap; }
+.login-right { padding-left: clamp(20px, 4vw, 54px); min-width: 0; }
+.user-card, .user-card:not(:disabled):hover, .user-card:not(:disabled):active { min-width: 0; min-height: 0; width: 310px; max-width: 100%; padding: 9px; display: flex; align-items: center; gap: 16px; text-align: left; border: 1px solid transparent; border-radius: 0; box-shadow: none; background: transparent; color: white; }
+.user-card:not(:disabled):hover, .user-card:focus-visible { background: linear-gradient(90deg, #184db7a8, transparent); border-image: linear-gradient(90deg, #b7c9f1, transparent) 1; }
+.user-avatar { width: 70px; height: 70px; object-fit: cover; border: 2px solid white; border-radius: 3px; box-shadow: 1px 1px 2px #16377c; }
+.user-card:hover .user-avatar { border-color: #ffdc62; }
+.user-info { display: flex; flex-direction: column; gap: 2px; }
+.user-name { font: 28px/1.2 Arial, sans-serif; }
+.user-role { color: #081d66; font: bold 12px Arial, sans-serif; }
+.login-arrow { margin-left: auto; font-size: 24px; opacity: 0; color: #d7ecad; }
+.user-card:hover .login-arrow, .user-card:focus-visible .login-arrow { opacity: 1; }
+.login-bottom-bar { height: 13.4dvh; min-height: 74px; flex-shrink: 0; background: #00309c; border-top: 2px solid; border-image: linear-gradient(90deg, #829fe8, #f2b853 30%, #829fe8 70%) 1; display: flex; align-items: center; justify-content: space-between; padding: 0 4%; gap: 20px; }
+.login-restart, .login-restart:not(:disabled):hover, .login-restart:not(:disabled):active { border: 0; background: none; box-shadow: none; color: white; display: flex; align-items: center; gap: 10px; padding: 6px; font-size: 14px; white-space: nowrap; }
+.login-restart img { width: 32px; height: 32px; }
+.login-restart:hover { text-decoration: underline; }
+.login-footer-text { font: 13px/1.65 Arial, 'Microsoft YaHei', sans-serif; }
+.login-footer-text p { margin: 0; }
 
-/* 顶部深蓝色条 */
-.login-top-bar {
-  height: 80px;
-  background: linear-gradient(180deg, #1e3a8a 0%, #1e40af 100%);
-}
+#desktop { position: fixed; inset: 0 0 var(--taskbar-height); background: #3e8ccc url('../assets/images/novus77-hillside.png') center/cover no-repeat; overflow: hidden; }
+.desktop-icons { position: absolute; inset: 32px auto 24px 28px; display: flex; flex-direction: column; flex-wrap: wrap; align-content: flex-start; gap: 18px 12px; pointer-events: none; }
+.desktop-icon, .desktop-icon:not(:disabled):hover, .desktop-icon:not(:disabled):active { flex: 0 0 112px; width: 112px; min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 12px 4px 6px; gap: 5px; border: 1px solid transparent; border-radius: 0; background: none; box-shadow: none; pointer-events: auto; }
+.desktop-icon img { width: 64px; height: 64px; object-fit: contain; }
+.desktop-icon span { color: white; font: 14px/1.4 var(--xp-font); text-shadow: 1px 1px 2px #152b34, 1px 1px 3px #152b34; }
+.desktop-icon:not(:disabled):hover { background: #316ac52b; border-color: #d5e6ff40; }
+.desktop-icon.selected, .desktop-icon:focus-visible { background: #316ac566; border: 1px dotted #d5e6ffbb; outline: none; }
+#taskbar { position: fixed; bottom: 0; inset-inline: 0; height: var(--taskbar-height); display: flex; align-items: center; z-index: 5000; background: linear-gradient(#3889ee 0%, #2057d4 10%, #2464df 35%, #245bd5 85%, #1946b0); box-shadow: inset 0 1px #7eafff; }
+.start-btn, .start-btn:not(:disabled):hover, .start-btn:not(:disabled):active { flex: 0 0 94px; height: 30px; min-width: 0; border: none; background: transparent; box-shadow: none; border-radius: 0; padding: 0; overflow: hidden; }
+.start-btn img { display: block; width: 94px; height: 30px; object-fit: cover; object-position: top; }
+.start-btn:hover img { filter: brightness(1.1); }
+.start-btn[aria-expanded=true] img { filter: brightness(.85); }
+#taskbar-buttons { flex: 1; min-width: 0; height: 100%; padding: 3px 6px; display: flex; gap: 3px; overflow-x: auto; scrollbar-width: none; }
+.taskbar-btn { flex: 0 1 168px; min-width: 44px; height: 24px; padding: 0 8px; display: flex; align-items: center; gap: 5px; border: 1px solid #1644ad; border-radius: 3px; color: white; font: 11px var(--xp-font); background: linear-gradient(#4084ec, #3980e5 50%, #3473db); box-shadow: inset 1px 1px #75a9f3; text-align: left; }
+.taskbar-btn img { width: 16px; height: 16px; object-fit: contain; flex-shrink: 0; }
+.taskbar-btn span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.taskbar-btn:not(:disabled):hover { background: #5594f5; box-shadow: inset 1px 1px #a4c7ff; }
+.taskbar-btn.active-task, .taskbar-btn:not(:disabled):active { background: #1953b7; box-shadow: inset 1px 1px 3px #103c8b; border-color: #133e92; }
+.taskbar-tray { height: 100%; display: flex; align-items: center; gap: 7px; padding: 0 12px 0 14px; border-left: 1px solid #1044a2; background: linear-gradient(#1bb5f3, #0997df 15%, #0c9ce8 90%, #1682cb); box-shadow: inset 1px 0 #63c6f6; }
+.tray-button, .tray-button:not(:disabled):hover, .tray-button:not(:disabled):active { min-width: 16px; min-height: 16px; height: 20px; padding: 0; border: none; background: transparent; box-shadow: none; }
+.tray-button img { width: 16px; height: 16px; object-fit: contain; display: block; }
+#volume-btn[aria-pressed=true] { opacity: .6; }
+.tray-clock { color: white; font: 11px var(--xp-font); white-space: nowrap; padding-left: 3px; }
+.tray-icons { display: flex; align-items: center; gap: 7px; }
+.tray-chevron, .tray-chevron:not(:disabled):hover, .tray-chevron:not(:disabled):active { width: 18px; min-width: 18px; height: 20px; min-height: 20px; padding: 0 0 2px; border: 1px solid #78cdf1; border-radius: 50%; background: linear-gradient(90deg, #176caf, #20aae1); box-shadow: inset 1px 0 #d5f4ff, 1px 0 1px #164893; color: white; font: 23px/16px Arial, sans-serif; }
+.tray-chevron[aria-expanded=false] { transform: rotate(180deg); }
+#desktop:focus { outline: none; }
 
-/* 主要内容区域 */
-.login-main {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 40px;
-}
+#start-menu { position: fixed; left: 0; bottom: var(--taskbar-height); width: 382px; max-width: 100vw; border: 2px solid #1760cf; border-radius: 8px 8px 0 0; overflow: hidden; background: white; z-index: 6000; box-shadow: 3px -2px 9px #142b6859; }
+.sm-header { display: flex; align-items: center; gap: 12px; height: 66px; padding: 8px; color: white; background: linear-gradient(#2b8bf1, #1767d1 12%, #2478df); border-bottom: 2px solid; border-image: linear-gradient(90deg, white, #e9a22c, white) 1; }
+.sm-avatar { width: 48px; height: 48px; object-fit: cover; border: 2px solid #d5e2f5; border-radius: 4px; }
+.sm-username { font: bold 18px Arial, sans-serif; text-shadow: 1px 2px #19469d; }
+.sm-body { display: grid; grid-template-columns: 1.15fr 1fr; min-height: 310px; max-height: calc(100dvh - 160px); overflow: auto; }
+.sm-left { padding: 8px 3px; }
+.sm-right { padding: 8px 3px; background: #d3e5fa; border-left: 1px solid #9abde7; }
+.sm-item, .sm-right-item { width: 100%; min-width: 0; height: auto; border: 0; border-radius: 0; background: none; box-shadow: none; display: flex; align-items: center; gap: 8px; padding: 6px; text-align: left; font: 11px var(--xp-font); }
+.sm-item img { width: 30px; height: 30px; object-fit: contain; flex-shrink: 0; }
+.sm-item small { display: block; margin-top: 3px; color: #777; }
+.sm-right-item { font-weight: bold; color: #153e7e; padding: 8px 5px; }
+.sm-right-item img { width: 24px; height: 24px; object-fit: contain; }
+.sm-item:not(:disabled):hover, .sm-right-item:not(:disabled):hover { background: #316ac5; color: white; box-shadow: none; }
+.sm-item:hover small { color: white; }
+.sm-divider, .sm-right-divider { height: 1px; margin: 6px; background: linear-gradient(90deg, transparent, #a4b4c8, transparent); }
+.sm-footer { height: 42px; display: flex; align-items: center; justify-content: flex-end; gap: 8px; padding: 4px 8px; background: linear-gradient(#398be9, #1768d2); }
+.sm-footer-btn, .sm-footer-btn:not(:disabled):hover { display: flex; align-items: center; gap: 5px; min-width: 0; padding: 3px; color: white; background: transparent; border: 0; box-shadow: none; }
+.sm-footer-btn img { width: 28px; height: 28px; }
+.sm-footer-btn:hover { text-decoration: underline; }
+.welcome-balloon { position: absolute; bottom: 18px; right: 16px; z-index: 4500; width: 320px; max-width: calc(100vw - 32px); padding: 14px 17px; border: 1px solid #6e6b49; border-radius: 8px; background: #ffffe1; color: #242424; box-shadow: 2px 3px 6px #1b294066; font: 11px/1.65 var(--xp-font); }
+.welcome-balloon::after { content: ''; position: absolute; bottom: -11px; right: 60px; width: 18px; height: 18px; border-right: 1px solid #6e6b49; border-bottom: 1px solid #6e6b49; background: #ffffe1; transform: skewY(40deg); }
+.welcome-balloon strong { display: flex; align-items: center; gap: 6px; padding-right: 14px; }
+.welcome-balloon strong img { width: 16px; height: 16px; }
+.welcome-balloon p { margin: 8px 0; }
+.welcome-balloon small { color: #595943; }
+.balloon-close, .balloon-close:not(:disabled):hover { position: absolute; top: 6px; right: 6px; min-width: 16px; min-height: 16px; padding: 0; background: transparent; box-shadow: none; border: 0; color: #727060; }
+.desktop-context { position: fixed; width: 190px; padding: 3px; background: #fff; border: 1px solid #aca899; box-shadow: 2px 2px 4px #2226; z-index: 6500; }
+.desktop-context button { width: 100%; background: none; box-shadow: none; border: 0; border-radius: 0; text-align: left; padding: 6px 14px; }
+.desktop-context button:hover { color: white; background: #316ac5; }
+#shutdown-screen { position: fixed; inset: 0; display: grid; place-items: center; background: #00309c; z-index: 9000; }
+.shutdown-content { text-align: center; color: white; }
+.shutdown-content img { width: 160px; }
+.shutdown-text { font-size: 18px; margin: 24px 0; }
+.noscript-message { position: fixed; inset: 30% 10%; z-index: 11000; padding: 32px; background: #ece9d8; color: #222; font-size: 16px; }
 
-.login-content {
-  display: flex;
-  align-items: center;
-  gap: 120px;
-  max-width: 1200px;
+@media (max-width: 640px) {
+  .login-content { grid-template-columns: 1fr; min-height: 0; gap: 15px; }
+  .login-left { padding: 0 20px; text-align: center; }
+  .login-left::after { display: none; }
+  .login-logo-container { margin: 0 auto 10px; transform: scale(.85); transform-origin: center bottom; }
+  .login-instruction { font-size: 13px; white-space: normal; }
+  .login-right { padding: 0; display: flex; justify-content: center; }
+  .user-card { width: 260px; }
+  .user-name { font-size: 24px; }
+  .user-avatar { width: 58px; height: 58px; }
+  .login-footer-text { display: none; }
+  .login-restart { font-size: 12px; }
+  .desktop-icons { inset: 12px auto 12px 12px; gap: 5px 6px; }
+  .desktop-icon, .desktop-icon:not(:disabled):hover, .desktop-icon:not(:disabled):active { width: 88px; flex-basis: 100px; padding-top: 8px; }
+  .desktop-icon img { width: 56px; height: 56px; }
+  .taskbar-tray { gap: 6px; padding-inline: 7px; }
+  .tray-icons .tray-button:last-of-type { display: none; }
+  .taskbar-btn { padding-inline: 4px; }
+  .taskbar-btn span { display: none; }
+  .welcome-balloon { bottom: 14px; }
 }
-
-/* 左侧：Logo 和品牌 */
-.login-left {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 32px;
+@media (max-height: 480px) and (orientation: landscape) {
+  .login-content { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0; min-height: 0; }
+  .login-logo-container { transform: scale(.7); height: 179px; transform-origin: center top; margin-bottom: -48px; }
+  .login-instruction { font-size: 12px; }
+  .login-bottom-bar { min-height: 50px; }
 }
-
-.login-logo-container {
-  display: flex;
-  align-items: center;
-  gap: 20px;
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }
-
-.xp-flag {
-  width: 80px;
-  height: 80px;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: 1fr 1fr;
-  gap: 4px;
-  transform: perspective(400px) rotateY(-15deg);
-  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
-}
-
-.flag-segment {
-  border-radius: 3px;
-}
-
-.flag-segment.red {
-  background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
-}
-
-.flag-segment.green {
-  background: linear-gradient(135deg, #7cb342 0%, #9ccc65 100%);
-}
-
-.flag-segment.blue {
-  background: linear-gradient(135deg, #1e88e5 0%, #42a5f5 100%);
-}
-
-.flag-segment.yellow {
-  background: linear-gradient(135deg, #fdd835 0%, #ffeb3b 100%);
-}
-
-.login-branding {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.brand-name {
-  font-size: 48px;
-  font-weight: 300;
-  color: #fff;
-  margin: 0;
-  font-family: 'Franklin Gothic Medium', 'Trebuchet MS', Arial, sans-serif;
-  letter-spacing: 2px;
-  text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-}
-
-.brand-xp {
-  font-weight: 700;
-  color: #ff6b35;
-  font-style: italic;
-  margin-left: 4px;
-}
-
-.brand-subtitle {
-  font-size: 14px;
-  color: rgba(255,255,255,0.9);
-  margin: 0;
-  font-style: italic;
-  letter-spacing: 1px;
-}
-
-.login-instruction {
-  color: #fff;
-  font-size: 14px;
-  text-align: center;
-  opacity: 0.95;
-  text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
-}
-
-/* 右侧：用户卡片 */
-.login-right {
-  display: flex;
-  align-items: center;
-}
-
-.user-card {
-  background: rgba(255,255,255,0.15);
-  backdrop-filter: blur(10px);
-  border: 2px solid rgba(255,255,255,0.3);
-  border-radius: 8px;
-  padding: 20px 24px;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-}
-
-.user-card:hover {
-  background: rgba(255,255,255,0.25);
-  border-color: rgba(255,255,255,0.5);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(0,0,0,0.3);
-}
-
-.user-avatar {
-  width: 72px;
-  height: 72px;
-  border-radius: 6px;
-  border: 3px solid rgba(255,255,255,0.8);
-  overflow: hidden;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-}
-
-.user-avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  position: absolute;
-}
-
-.avatar-letter {
-  color: #fff;
-  font-size: 32px;
-  font-weight: bold;
-  z-index: 1;
-}
-
-.user-info {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.user-name {
-  color: #fff;
-  font-size: 18px;
-  font-weight: bold;
-  text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
-}
-
-.user-role {
-  color: rgba(255,255,255,0.85);
-  font-size: 12px;
-}
-
-/* 底部栏 */
-.login-bottom-bar {
-  height: 80px;
-  background: linear-gradient(180deg, #1e3a8a 0%, #1e40af 100%);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 32px;
-}
-
-.login-restart {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  color: #fff;
-  font-size: 13px;
-  cursor: pointer;
-  padding: 8px 16px;
-  border-radius: 4px;
-  transition: background 0.2s;
-}
-
-.login-restart:hover {
-  background: rgba(255,255,255,0.15);
-}
-
-.restart-icon {
-  color: #7cb342;
-}
-
-.login-footer-text {
-  text-align: right;
-  color: rgba(255,255,255,0.8);
-  font-size: 11px;
-  line-height: 1.6;
-}
-
-.login-footer-text p {
-  margin: 0;
-}
-
-/* ══════════════════════════════════════════
-   桌面 — Bliss 壁纸（CSS 近似）
-══════════════════════════════════════════ */
-#desktop {
-  position: fixed; inset: 0; bottom: 30px;
-  background:
-    url('../assets/images/windows XP.jpg') center/cover no-repeat,
-    radial-gradient(ellipse 180% 70% at 50% 108%, #3d7a1e 0%, #5aaa2a 22%, #7ac840 38%, transparent 55%),
-    linear-gradient(180deg, #1a5fa0 0%, #3a8fd0 22%, #6ab8e8 48%, #a8d8f0 68%, #c8eaf8 82%, #d8f0f8 100%);
-  overflow: hidden;
-}
-
-/* ── 桌面图标 ── */
-.desktop-icons {
-  position: absolute; top: 10px; left: 10px;
-  display: flex; flex-direction: column; gap: 6px; z-index: 1;
-}
-.desktop-icon {
-  display: flex; flex-direction: column; align-items: center;
-  width: 90px; padding: 6px 4px; border-radius: 2px; cursor: pointer;
-}
-.desktop-icon img { width: 64px; height: 64px; image-rendering: auto; }
-.desktop-icon .icon-emoji { font-size: 64px; line-height: 1; }
-.desktop-icon span {
-  color: #fff; font-size: 11px; text-align: center; margin-top: 2px;
-  text-shadow: 1px 1px 2px #000, -1px -1px 2px #000;
-  word-break: break-word; width: 100%;
-}
-.desktop-icon.selected { background: rgba(49,106,197,0.5); outline: 1px dashed rgba(255,255,255,0.8); }
-.desktop-icon:hover { background: rgba(49,106,197,0.3); }
-
-/* ══════════════════════════════════════════
-   任务栏
-══════════════════════════════════════════ */
-#taskbar {
-  position: fixed; bottom: 0; left: 0; right: 0; height: 30px;
-  background: linear-gradient(180deg,
-    #245edb 0%, #1e52cc 3%, #2060d8 6%,
-    #2060d8 90%, #1a48c0 96%, #1a48c0 100%);
-  border-top: 1px solid #3a7fff;
-  display: flex; align-items: center; gap: 2px; padding: 0 2px;
-  z-index: 5000; box-shadow: 0 -1px 0 #0a2a90;
-}
-.start-btn {
-  height: 26px; padding: 0 12px 0 8px; min-width: 84px;
-  background: linear-gradient(180deg,
-    #5cc157 0%, #34a330 8%, #27962a 50%, #229120 88%, #0b6f0f 100%);
-  border: none; border-radius: 0 12px 12px 0;
-  color: #fff; font-size: 13px; font-weight: bold;
-  font-family: 'Franklin Gothic Medium', 'Trebuchet MS', Arial, sans-serif;
-  cursor: pointer; display: flex; align-items: center; gap: 6px;
-  box-shadow: 1px 0 3px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.4);
-  letter-spacing: 0.5px; margin-left: 2px;
-}
-.start-btn:hover {
-  background: linear-gradient(180deg,
-    #6dd668 0%, #45b340 8%, #38a63a 50%, #33a130 88%, #1c7f20 100%);
-}
-.start-btn:active {
-  background: linear-gradient(180deg, #1f7a22 0%, #229120 50%, #5cc157 100%);
-}
-.start-logo { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; width: 16px; height: 16px; }
-.s-quad { border-radius: 1px; }
-.s-quad.red    { background: #f25022; }
-.s-quad.green  { background: #7fba00; }
-.s-quad.blue   { background: #00a4ef; }
-.s-quad.yellow { background: #ffb900; }
-.taskbar-sep { width: 1px; height: 20px; background: linear-gradient(180deg,#0a2a90,#3a7fff,#0a2a90); margin: 0 2px; }
-#taskbar-buttons { flex: 1; display: flex; align-items: center; gap: 3px; overflow: hidden; height: 100%; padding: 2px 0; }
-.taskbar-btn {
-  height: 22px; min-width: 120px; max-width: 160px; padding: 0 8px;
-  background: linear-gradient(180deg, #3270cd 0%, #2060be 40%, #1a52b4 100%);
-  border: 1px solid #0a2a80; border-radius: 2px; color: #fff;
-  font-size: 11px; font-family: 'Tahoma', Arial, sans-serif;
-  cursor: pointer; text-align: left; overflow: hidden;
-  text-overflow: ellipsis; white-space: nowrap;
-  display: flex; align-items: center; gap: 4px;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.2);
-}
-.taskbar-btn:hover { background: linear-gradient(180deg, #4a85e0 0%, #3270d0 40%, #2a62c8 100%); }
-.taskbar-btn.active-task {
-  background: linear-gradient(180deg, #1a3ea0 0%, #2050b8 40%, #1c44a8 100%);
-  border-color: #000d40;
-  box-shadow: inset 1px 1px 2px rgba(0,0,0,0.4), inset 0 1px 0 rgba(0,0,0,0.2);
-}
-.taskbar-tray {
-  display: flex; align-items: center; gap: 4px; height: 100%;
-  background: linear-gradient(180deg, #1040a8 0%, #1848b8 50%, #1040a8 100%);
-  border-left: 1px solid #0030a0; padding: 0 8px;
-}
-.tray-icon { font-size: 14px; cursor: default; }
-.tray-clock { color: #fff; font-size: 11px; text-align: right; line-height: 1.3; min-width: 60px; }
-
-/* ══════════════════════════════════════════
-   开始菜单
-══════════════════════════════════════════ */
-#start-menu {
-  position: fixed; bottom: 30px; left: 2px; width: 380px;
-  background: #fff; border-radius: 8px 8px 0 0;
-  box-shadow: 3px -3px 12px rgba(0,0,0,0.5);
-  z-index: 6000; overflow: hidden; border: 1px solid #0040cc;
-}
-.sm-header {
-  background: linear-gradient(90deg, #1e52cc 0%, #2a6ae0 40%, #1e52cc 100%);
-  padding: 8px 12px; display: flex; align-items: center; gap: 10px; min-height: 54px;
-}
-.sm-avatar {
-  width: 40px; height: 40px; border-radius: 4px;
-  border: 2px solid rgba(255,255,255,0.5); background: #3a7bd5;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 20px; font-weight: bold; color: #fff;
-}
-.sm-username { color: #fff; font-size: 13px; font-weight: bold; }
-.sm-body { display: flex; height: 320px; }
-.sm-left { flex: 1; padding: 6px 0; border-right: 1px solid #e0e0e0; overflow-y: auto; }
-.sm-right { width: 160px; background: #d9e8ff; padding: 6px 0; }
-.sm-item {
-  display: flex; align-items: center; gap: 10px;
-  padding: 5px 12px; cursor: pointer; border-radius: 2px; margin: 0 2px;
-}
-.sm-item:hover { background: #316ac5; color: #fff; }
-.sm-item:hover .sm-label { color: #fff; }
-.sm-pinned .sm-icon { font-size: 22px; }
-.sm-icon { font-size: 16px; width: 24px; text-align: center; flex-shrink: 0; }
-.sm-label { font-size: 12px; font-weight: bold; color: #000; }
-.sm-divider { height: 1px; background: #d0d0d0; margin: 4px 8px; }
-.sm-right-item {
-  display: flex; align-items: center; gap: 8px;
-  padding: 5px 10px; font-size: 11px; color: #000080;
-  cursor: pointer; border-radius: 2px; margin: 0 2px;
-}
-.sm-right-item:hover { background: #316ac5; color: #fff; }
-.sm-right-divider { height: 1px; background: rgba(0,0,128,0.2); margin: 4px 8px; }
-.sm-footer {
-  background: linear-gradient(90deg, #1e52cc 0%, #2a6ae0 100%);
-  padding: 4px 10px; display: flex; justify-content: flex-end;
-  border-top: 1px solid #0040cc;
-}
-.sm-footer-btn {
-  display: flex; align-items: center; gap: 6px;
-  color: #fff; font-size: 11px; cursor: pointer;
-  padding: 3px 10px; border-radius: 3px;
-  background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.2);
-}
-.sm-footer-btn:hover { background: rgba(255,255,255,0.2); }
-
-/* ══════════════════════════════════════════
-   关机屏幕
-══════════════════════════════════════════ */
-#shutdown-screen {
-  position: fixed; inset: 0; background: #000;
-  display: flex; align-items: center; justify-content: center; z-index: 9999;
-}
-.shutdown-content { display: flex; flex-direction: column; align-items: center; gap: 24px; }
-.shutdown-text { color: #aaa; font-size: 14px; letter-spacing: 1px; }
+/* Match the compact two-column Start menu proportions. */
+#start-menu { width: 336px; }
+.sm-header { height: 52px; }
+.sm-avatar { width: 40px; height: 40px; }
+.sm-username { font-size: 14px; }
+.sm-body { min-height: 350px; grid-template-columns: 1.05fr 1fr; }
+.sm-right { background: #eff5fe; }

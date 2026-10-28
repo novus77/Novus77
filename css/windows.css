@@ -1,55 +1,34 @@
-/* windows.css — 窗口定位、动画、覆盖 xp-lib.css 的必要样式 */
-
-/* 窗口容器 */
 #windows-container { position: absolute; inset: 0; pointer-events: none; }
-
-/* 窗口本体 */
-.window {
-  position: absolute !important;
-  pointer-events: all;
-  display: flex !important;
-  flex-direction: column !important;
-  min-width: 280px;
-  min-height: 180px;
-  box-shadow: 3px 3px 10px rgba(0,0,0,0.5) !important;
+.window { position: absolute; pointer-events: auto; display: flex; flex-direction: column; min-width: min(280px, 100%); min-height: min(180px, 100%); padding: 3px; box-shadow: 2px 3px 8px #14294866; }
+.window.active-window { box-shadow: 3px 4px 10px #14294888; }
+.window .title-bar { flex-shrink: 0; height: 27px; touch-action: none; }
+.title-bar-text { display: flex; align-items: center; gap: 6px; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font: bold 12px var(--xp-font); }
+.title-bar-text img { width: 16px; height: 16px; object-fit: contain; }
+.title-bar-controls { flex-shrink: 0; }
+.title-bar.inactive { background: linear-gradient(#8aa9e5, #7896dc 12%, #6d8bd0 85%, #7393dc); }
+.window-body { flex: 1; min-height: 0; min-width: 0; overflow: auto; margin: 0; padding: 0; position: relative; user-select: text; }
+.window .xp-menubar { position: relative; min-height: 23px; height: auto; padding-right: 30px; }
+.window-brand { position: absolute; right: 4px; top: 1px; width: 25px; height: 20px; object-fit: cover; object-position: top; }
+.window .xp-toolbar { height: 51px; flex-shrink: 0; padding: 4px 8px; gap: 7px; }
+.window .xp-toolbar-btn { height: 35px; min-width: 0; background: transparent; border: 1px solid transparent; box-shadow: none; gap: 6px; padding: 3px 6px; }
+.window .xp-toolbar-btn img { width: 26px; height: 26px; object-fit: contain; }
+.window .xp-toolbar-btn:hover { border-color: #cecec2; background: #fff7; box-shadow: none; }
+.window .xp-addressbar { height: 27px; }
+.window .xp-addressbar-input { min-width: 0; }
+.window .status-bar { flex-shrink: 0; margin: 2px 0 0; min-height: 19px; }
+.window .xp-statusbar-panel { height: 17px; border: 0; }
+.win-resize { position: absolute; right: 3px; bottom: 3px; width: 14px; height: 14px; cursor: se-resize; touch-action: none; background: repeating-linear-gradient(135deg, transparent 0 2px, #929183 2px 3px, transparent 3px 4px); clip-path: polygon(100% 0, 100% 100%, 0 100%); }
+.maximized .win-resize { display: none; }
+@keyframes minimizeAnim { to { transform: translateY(35px) scale(.92); opacity: 0; } }
+@keyframes restoreAnim { from { transform: translateY(20px) scale(.96); opacity: 0; } to { transform: none; opacity: 1; } }
+.minimizing { animation: minimizeAnim .16s ease-in both; pointer-events: none; }
+.restoring { animation: restoreAnim .16s ease-out both; }
+@media (max-width: 640px) {
+  .window .title-bar { height: 32px; }
+  .window .title-bar-controls button { min-width: 25px; height: 24px; }
+  .window .xp-toolbar { height: 43px; gap: 2px; padding: 3px; }
+  .window .xp-toolbar-btn { padding: 2px 4px; font-size: 10px; }
+  .window .xp-toolbar-btn img { width: 20px; height: 20px; }
 }
-
-/* 活动窗口阴影更强 */
-.window.active-window {
-  box-shadow: 4px 4px 16px rgba(0,0,0,0.65) !important;
-}
-
-/* 标题栏非活动状态 */
-.title-bar.inactive {
-  background: linear-gradient(180deg, #7a96df 0%, #3a6bc7 8%, #3a6bc7 88%) !important;
-}
-
-/* 窗口内容区 */
-.window-body {
-  flex: 1 !important;
-  overflow: auto !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  position: relative;
-}
-
-/* 最小化/还原动画 */
-@keyframes minimizeAnim {
-  from { transform: scale(1); opacity: 1; }
-  to   { transform: scale(0.1) translateY(400px); opacity: 0; }
-}
-@keyframes restoreAnim {
-  from { transform: scale(0.1) translateY(400px); opacity: 0; }
-  to   { transform: scale(1); opacity: 1; }
-}
-.minimizing { animation: minimizeAnim 0.2s ease-in forwards; }
-.restoring  { animation: restoreAnim  0.2s ease-out forwards; }
-
-/* 调整大小手柄 */
-.win-resize {
-  position: absolute; right: 0; bottom: 0;
-  width: 16px; height: 16px;
-  cursor: se-resize;
-  background: linear-gradient(135deg, transparent 50%, #a0a0a0 50%);
-  z-index: 10;
-}
+.window .status-bar { height: 19px; }
+.window .status-bar-field { margin: 0; padding: 2px 4px; }

@@ -73,33 +73,21 @@ const DATA = {
         title: '凌晨两点的灵感备忘',
         date: '2026-04-10',
         summary: '关于为什么我想把网站做成一台真的“电脑”。',
-        content: [
-          '最近越来越觉得，作品集不应该只是把项目一块一块摆出来，它更像一个人长期使用过的桌面。',
-          '我想让别人打开这个网站时，感觉像是进入了我的工作台，而不是浏览一张排版工整的海报。',
-          'Windows XP 这种熟悉感特别有意思，它有一点复古，也有一点温度，像小时候第一次觉得“电脑很神奇”的那个瞬间。'
-        ]
+        file: 'docs/essays/late-night-ideas.md'
       },
       {
         id: 'note-02',
         title: '今天想记录下来的小事',
         date: '2026-04-07',
         summary: '关于节奏、做事方式，还有一点点日常。',
-        content: [
-          '写代码的时候，我越来越在意节奏感。不是一味做得快，而是让每一步都自然地接到下一步。',
-          '有时候一个页面看起来已经完成了，但总觉得少一点情绪。这个时候我更愿意停下来，想想是不是还差一处细节、一段声音，或者一种进入方式。',
-          '可能这也是我喜欢做前端的原因，功能之外，界面其实也在表达一个人的审美和性格。'
-        ]
+        file: 'docs/essays/today-small-things.md'
       },
       {
         id: 'note-03',
         title: '给未来自己的一个提醒',
         date: '2026-04-01',
         summary: '继续保持表达，别只顾着完成任务。',
-        content: [
-          '如果一个项目只是“做完了”，那它往往很快就会被忘记。',
-          '但如果一个项目里留下了自己的判断、偏好和情绪，它就会慢慢长成真正有辨识度的东西。',
-          '以后做网站也好，写文档也好，都记得让它保留一点属于自己的气味。'
-        ]
+        file: 'docs/essays/reminder-to-future-self.md'
       }
     ]
   },
@@ -180,14 +168,14 @@ function openNotes() {
   const notes = DATA.notes.entries;
   const initialNote = notes[0];
   const listHtml = notes.map((note, index) => `
-    <div class="notes-list-item${index === 0 ? ' active' : ''}" onclick="showNoteEntry('${note.id}')">
-      <div class="notes-list-icon">📄</div>
+    <button class="notes-list-item${index === 0 ? ' active' : ''}" onclick="showNoteEntry('${note.id}')">
+      <img class="notes-list-icon" src="assets/xp/notes.webp" alt="" />
       <div class="notes-list-text">
         <div class="notes-list-title">${note.title}</div>
         <div class="notes-list-meta">${note.date}</div>
         <div class="notes-list-summary">${note.summary}</div>
       </div>
-    </div>`).join('');
+    </button>`).join('');
 
   const content = `
     <div class="notes-shell">
@@ -197,7 +185,7 @@ function openNotes() {
         <div class="notes-list" id="notes-list">${listHtml}</div>
       </div>
       <div class="notes-reader" id="notes-reader">
-        ${renderNoteEntry(initialNote)}
+        ${renderNoteLoading(initialNote)}
       </div>
     </div>`;
 
@@ -206,17 +194,78 @@ function openNotes() {
     width: 760, height: 500, content,
     menubar: `<span class="xp-menu-item">文件</span><span class="xp-menu-item">编辑</span><span class="xp-menu-item">收藏</span><span class="xp-menu-item">帮助</span>`,
     toolbar: `
-      <button class="xp-toolbar-btn" onclick="showFirstNote()">📄 打开首页</button>
+      <button class="xp-toolbar-btn" onclick="showFirstNote()"><img src="assets/xp/notes.webp" alt="" />打开首页</button>
       <div class="xp-toolbar-sep"></div>
-      <button class="xp-toolbar-btn">🖊️ 随笔</button>`,
+      <button class="xp-toolbar-btn" onclick="showFirstNote()"><img src="assets/icons/folder.png" alt="" />随笔集</button>`,
     addressbar: `
       <span class="xp-addressbar-label">地址</span>
       <input class="xp-addressbar-input" value="C:\\Users\\Novus77\\My Documents\\Essays" readonly>`,
     statusbar: `<div class="xp-statusbar-panel">${notes.length} 篇文档</div>`,
   });
+
+  if (initialNote) {
+    loadNoteEntry(initialNote);
+  }
 }
 
-function renderNoteEntry(note) {
+const noteContentCache = {};
+
+function renderMarkdown(markdown) {
+  const lines = markdown.split('\n');
+  const html = [];
+  let paragraph = [];
+  let listItems = [];
+
+  function flushParagraph() {
+    if (!paragraph.length) return;
+    html.push(`<p>${paragraph.join('<br>')}</p>`);
+    paragraph = [];
+  }
+
+  function flushList() {
+    if (!listItems.length) return;
+    html.push(`<ul>${listItems.map(item => `<li>${item}</li>`).join('')}</ul>`);
+    listItems = [];
+  }
+
+  lines.forEach(rawLine => {
+    const line = rawLine.trim();
+
+    if (!line) {
+      flushParagraph();
+      flushList();
+      return;
+    }
+
+    if (line.startsWith('# ')) {
+      flushParagraph();
+      flushList();
+      html.push(`<h2>${line.slice(2)}</h2>`);
+      return;
+    }
+
+    if (line.startsWith('## ')) {
+      flushParagraph();
+      flushList();
+      html.push(`<h3>${line.slice(3)}</h3>`);
+      return;
+    }
+
+    if (line.startsWith('- ')) {
+      flushParagraph();
+      listItems.push(line.slice(2));
+      return;
+    }
+
+    paragraph.push(line);
+  });
+
+  flushParagraph();
+  flushList();
+  return html.join('');
+}
+
+function renderNoteLoading(note) {
   if (!note) {
     return `
       <div class="notes-empty">
@@ -236,23 +285,70 @@ function renderNoteEntry(note) {
         <div class="notes-paper-title">${note.title}</div>
         <div class="notes-paper-summary">${note.summary}</div>
         <div class="notes-paper-body">
-          ${note.content.map(paragraph => `<p>${paragraph}</p>`).join('')}
+          <div class="notes-loading">正在读取文档...</div>
         </div>
       </div>
     </div>`;
 }
 
-window.showNoteEntry = function (noteId) {
-  const note = DATA.notes.entries.find(entry => entry.id === noteId);
+function renderNoteEntry(note, bodyHtml) {
+  if (!note) return renderNoteLoading(note);
+
+  return `
+    <div class="notes-page">
+      <div class="notes-page-topbar">
+        <div class="notes-page-path">我的文档\\随笔集</div>
+        <div class="notes-page-date">${note.date}</div>
+      </div>
+      <div class="notes-paper">
+        <div class="notes-paper-pin"></div>
+        <div class="notes-paper-title">${note.title}</div>
+        <div class="notes-paper-summary">${note.summary}</div>
+        <div class="notes-paper-body">${bodyHtml}</div>
+      </div>
+    </div>`;
+}
+
+async function loadNoteEntry(note) {
   const reader = document.getElementById('notes-reader');
   if (!reader) return;
+
+  reader.innerHTML = renderNoteLoading(note);
+
+  if (!note) return;
+
+  if (noteContentCache[note.id]) {
+    reader.innerHTML = renderNoteEntry(note, noteContentCache[note.id]);
+    return;
+  }
+
+  try {
+    const response = await fetch(note.file, { cache: 'no-cache' });
+    if (!response.ok) {
+      throw new Error(`Failed to load ${note.file}`);
+    }
+
+    const markdown = await response.text();
+    const bodyHtml = renderMarkdown(markdown);
+    noteContentCache[note.id] = bodyHtml;
+    reader.innerHTML = renderNoteEntry(note, bodyHtml);
+  } catch (error) {
+    reader.innerHTML = renderNoteEntry(
+      note,
+      '<div class="notes-error">文档读取失败，请检查文件路径或本地服务是否正常。</div>'
+    );
+  }
+}
+
+window.showNoteEntry = function (noteId) {
+  const note = DATA.notes.entries.find(entry => entry.id === noteId);
 
   document.querySelectorAll('.notes-list-item').forEach(item =>
     item.classList.remove('active'));
   document.querySelector(`.notes-list-item[onclick="showNoteEntry('${noteId}')"]`)
     ?.classList.add('active');
 
-  reader.innerHTML = renderNoteEntry(note);
+  loadNoteEntry(note);
 };
 
 window.showFirstNote = function () {
@@ -266,52 +362,40 @@ window.showFirstNote = function () {
    ================================================ */
 function openAbout() {
   const d = DATA.about;
-
-  const specsHtml = d.specs.map(s =>
-    `<div class="about-spec-label">${s.label}：</div><div class="about-spec-value">${s.value}</div>`
-  ).join('');
-
-  const skillsHtml = d.skills.map(s => `
-    <div class="skill-row">
-      <span>${s.name}</span>
-      <div class="skill-bar-bg">
-        <div class="skill-bar-fill" style="width:${s.pct}%"></div>
-      </div>
-      <span class="skill-pct">${s.pct}%</span>
-    </div>`).join('');
-
   const content = `
-    <div class="app-container" style="padding:12px">
-      <div class="about-tabs">
-        <div class="about-tab active" onclick="switchAboutTab(event,'general')">常规</div>
-        <div class="about-tab" onclick="switchAboutTab(event,'skills')">技能</div>
-      </div>
-
-      <div id="about-general" class="about-tab-content active">
-        <div class="about-header">
-          <div class="about-avatar-wrap">
-            <img src="assets/images/avatar.png" alt="" onerror="this.style.display='none'">
-            <span style="font-size:40px;position:absolute">👤</span>
-          </div>
-          <div>
-            <div class="about-name">${d.name}</div>
-            <div class="about-title">${d.title}</div>
-            <div class="about-bio">${d.bio}</div>
-          </div>
-        </div>
-        <div class="about-specs">${specsHtml}</div>
-      </div>
-
-      <div id="about-skills" class="about-tab-content">
-        <div class="skill-bars">${skillsHtml}</div>
-      </div>
+    <div class="about-explorer">
+      <aside class="about-sidebar">
+        <section class="xp-task-panel"><h2>联系我 <span>⌃</span></h2><div>
+          <a href="mailto:1432680433@qq.com"><img src="assets/xp/contact.webp" alt="" />发送邮件</a>
+          <a href="https://github.com/jobmake77" target="_blank" rel="noreferrer"><img src="assets/xp/projects.webp" alt="" />GitHub</a>
+          <a href="https://x.com/novus771" target="_blank" rel="noreferrer"><img src="assets/xp/notes.webp" alt="" />Twitter / X</a>
+        </div></section>
+        <section class="xp-task-panel"><h2>技能 <span>⌃</span></h2><div>
+          ${d.skills.map(skill => `<div class="about-skill"><img src="assets/xp/about.webp" alt="" /><span>${skill.name}</span></div>`).join('')}
+        </div></section>
+        <section class="xp-task-panel"><h2>桌面上的其他地方 <span>⌃</span></h2><div>
+          <button onclick="openWindow('notes')"><img src="assets/xp/notes.webp" alt="" />我的文档</button>
+          <button onclick="openWindow('projects')"><img src="assets/xp/projects.webp" alt="" />我的项目</button>
+          <button onclick="openWindow('music')"><img src="assets/xp/music.webp" alt="" />我的音乐</button>
+        </div></section>
+      </aside>
+      <article class="about-content">
+        <h1>关于我</h1>
+        <div class="about-intro"><img src="assets/images/avatar.jpg" alt="Novus77" /><div><h2>${d.name}</h2><p class="about-role">${d.title}</p><p>${d.bio}</p></div></div>
+        <div class="about-facts">${d.specs.map(spec => `<p><strong>${spec.label}</strong><span>${spec.value}</span></p>`).join('')}</div>
+        <div class="about-note"><img src="assets/xp/notes.webp" alt="" /><p>欢迎来到我的个人桌面。打开「我的项目」看看最近的作品，或在「我的文档」里读读我的随笔。</p></div>
+      </article>
     </div>`;
-
   WM.create({
-    id: 'about', title: '关于 Novus77', icon: '🖥️',
-    width: 480, height: 360, content,
-    menubar: `<span class="xp-menu-item">文件</span><span class="xp-menu-item">帮助</span>`,
-    statusbar: `<div class="xp-statusbar-panel">Novus77.com</div>`,
+    id: 'about', title: '关于我', width: 805, height: 630, content,
+    menubar: `<span class="xp-menu-item">文件</span><span class="xp-menu-item">查看</span><span class="xp-menu-item">帮助</span>`,
+    toolbar: `
+      <button class="xp-toolbar-btn" onclick="openWindow('projects')"><img src="assets/xp/projects.webp" alt="" />我的项目</button>
+      <button class="xp-toolbar-btn" onclick="openWindow('resume')"><img src="assets/xp/resume.webp" alt="" />我的简历</button>
+      <div class="xp-toolbar-sep"></div>
+      <button class="xp-toolbar-btn" onclick="openWindow('notes')"><img src="assets/icons/folder.png" alt="" />我的文档</button>`,
+    addressbar: `<span class="xp-addressbar-label">地址</span><input class="xp-addressbar-input" aria-label="当前地址" value="关于 Novus77" readonly />`,
+    statusText: '就绪',
   });
 }
 
@@ -329,11 +413,11 @@ window.switchAboutTab = function (e, tabId) {
    ================================================ */
 function openProjects() {
   const cardsHtml = DATA.projects.map(p => `
-    <div class="project-card" onclick="showProjectDetail('${p.id}')">
-      <div class="project-card-icon">${p.icon}</div>
+    <button class="project-card" onclick="showProjectDetail('${p.id}')">
+      <img class="project-card-icon" src="assets/icons/folder.png" alt="" />
       <div class="project-card-name">${p.name}</div>
       <div class="project-card-desc">${p.desc}</div>
-    </div>`).join('');
+    </button>`).join('');
 
   const content = `
     <div class="explorer-layout">
@@ -355,7 +439,7 @@ function openProjects() {
     toolbar: `
       <button class="xp-toolbar-btn" onclick="showProjectsGrid()">⬅ 后退</button>
       <div class="xp-toolbar-sep"></div>
-      <button class="xp-toolbar-btn">🔍 搜索</button>`,
+      <button class="xp-toolbar-btn" onclick="openWindow('notes')"><img src="assets/xp/notes.webp" alt="" />我的文档</button>`,
     addressbar: `
       <span class="xp-addressbar-label">地址</span>
       <input class="xp-addressbar-input" value="C:\\Users\\Novus77\\Projects" readonly>`,
@@ -380,11 +464,11 @@ window.showProjectDetail = function (projId) {
 
 window.showProjectsGrid = function () {
   const cardsHtml = DATA.projects.map(p => `
-    <div class="project-card" onclick="showProjectDetail('${p.id}')">
-      <div class="project-card-icon">${p.icon}</div>
+    <button class="project-card" onclick="showProjectDetail('${p.id}')">
+      <img class="project-card-icon" src="assets/icons/folder.png" alt="" />
       <div class="project-card-name">${p.name}</div>
       <div class="project-card-desc">${p.desc}</div>
-    </div>`).join('');
+    </button>`).join('');
   const main = document.getElementById('projects-main');
   if (!main) return;
   main.innerHTML = `<div class="explorer-grid">${cardsHtml}</div>`;
@@ -459,12 +543,8 @@ function openContact() {
   const content = `
     <div class="contact-outlook">
       <div class="contact-toolbar">
-        <div class="contact-tool-btn">
-          <span class="btn-icon">✉️</span>发邮件
-        </div>
-        <div class="contact-tool-btn">
-          <span class="btn-icon">🔗</span>社交
-        </div>
+        <a class="contact-tool-btn" href="mailto:1432680433@qq.com"><img src="assets/xp/contact.webp" alt="" />发邮件</a>
+        <a class="contact-tool-btn" href="https://github.com/jobmake77" target="_blank" rel="noreferrer"><img src="assets/xp/projects.webp" alt="" />GitHub</a>
       </div>
       <div class="contact-body">
         <div class="contact-folders">

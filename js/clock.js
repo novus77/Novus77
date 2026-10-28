@@ -1,13 +1,10 @@
-/* clock.js — 任务栏时钟 */
+/* Keep the desktop clock in the visitor's local timezone. */
 function updateClock() {
   const el = document.getElementById('tray-clock');
-  if (!el) return;
   const now = new Date();
-  const h = String(now.getHours()).padStart(2, '0');
-  const m = String(now.getMinutes()).padStart(2, '0');
-  const date = `${now.getMonth()+1}/${now.getDate()}/${now.getFullYear()}`;
-  el.innerHTML = `${h}:${m}<br><span style="font-size:10px">${date}</span>`;
+  el.textContent = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+  el.dateTime = now.toISOString();
+  el.title = now.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' });
 }
-
 setInterval(updateClock, 1000);
 updateClock();
